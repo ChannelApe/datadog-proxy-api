@@ -4,6 +4,8 @@ const axios = require("axios");
 
 const app = express();
 
+app.get('/health', (_, res) => res.sendStatus(200));
+
 app.post('/', async (req, res) => {
   await axios.post(
     req.query.ddforward,
