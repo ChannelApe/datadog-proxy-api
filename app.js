@@ -1,8 +1,10 @@
 const express = require('express');
-
+const cors = require('cors');
 const axios = require("axios");
 
 const app = express();
+
+app.use(cors())
 
 app.get('/health', (_, res) => res.sendStatus(200));
 
@@ -15,7 +17,6 @@ app.post('/', async (req, res) => {
         Accept: req.headers.accept,
         'Content-Type': req.headers['content-type'],
         'X-Forwarded-For': req.headers['x-forwarded-for'],
-        'Access-Control-Allow-Origin:': '*',
       },
     }
   ).then(function (response) {
