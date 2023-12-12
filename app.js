@@ -15,6 +15,7 @@ app.post('/', async (req, res) => {
         Accept: req.headers.accept,
         'Content-Type': req.headers['content-type'],
         'X-Forwarded-For': req.headers['x-forwarded-for'],
+        'Access-Control-Allow-Origin:': '*',
       },
     }
   ).then(function (response) {
