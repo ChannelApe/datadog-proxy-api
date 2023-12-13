@@ -4,7 +4,6 @@ const querystring = require('querystring');
 const axios = require('axios');
 const winston = require('winston');
 const cors = require('cors');
-const FormData = require('form-data');
 
 // Initialize Express app
 const app = express();
