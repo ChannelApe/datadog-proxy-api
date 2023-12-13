@@ -11,27 +11,16 @@ const app = express();
 // Define the hostname
 const ddhostname = process.env.ddhostname || "browser-intake-datadoghq.com";
 
-
 app.use(cors())
-
 
 // Winston logger setup
 const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.printf(info => JSON.stringify({ 
-      level: info.level, 
-      message: info.message, 
-      timestamp: info.timestamp 
-    }))
-  ),
+  format: winston.format.prettyPrint(),
   transports: [
     new winston.transports.Console()
   ]
 });
-
-
 
 // Configure Multer (adjust storage and limits as needed)
 const upload = multer();
