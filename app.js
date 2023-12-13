@@ -1,50 +1,69 @@
-const express = require('express');
-const cors = require('cors');
+const express = require("express");
+const cors = require("cors");
 const axios = require("axios");
-const querystring = require('querystring');
+const querystring = require("querystring");
+const winston = require("winston");
 
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+
+// Winston logger setup
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json() // Ensures single-line JSON output
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.json()
+      ),
+    }),
+  ],
+});
 
 // Use environment variable for baseUrl, with a default fallback
-const baseUrl = process.env.BASE_URL || 'https://browser-intake-datadoghq.com';
+const baseUrl = process.env.BASE_URL || "https://browser-intake-datadoghq.com";
 
-app.get('/health', (_, res) => res.sendStatus(200));
+app.get("/health", (_, res) => res.sendStatus(200));
 
-app.post('/', async (req, res) => {
-  const forwardPath = decodeURIComponent(req.query.ddforward);
+app.post('/', (req, res) => {
+  let data = '';
+  req.on('data', chunk => {
+    data += chunk;
+  });
+  req.on('end', async () => {
+    // Construct the full URL
+    const forwardPath = decodeURIComponent(req.query.ddforward);
+    const queryParams = {...req.query};
+    delete queryParams.ddforward; // Remove the ddforward parameter.
 
-  if (!forwardPath) {
-    console.error('No ddforward parameter provided or it is invalid');
-    return res.status(400).send('No ddforward parameter provided or it is invalid');
-  }
+    const fullUrl = `${baseUrl}${forwardPath}?${querystring.stringify(queryParams)}`;
+    logger.info(`Forwarding to URL: ${fullUrl}`);
+    logger.info(`Body: ${data}`);
 
-  const queryParams = {...req.query};
-  delete queryParams.ddforward; // Remove the ddforward parameter.
-
-  const fullUrl = `${baseUrl}${forwardPath}?${querystring.stringify(queryParams)}`;
-  console.log('Forwarding to URL:', fullUrl); // Log the URL for debugging
-
-  try {
-    const response = await axios.post(
-      fullUrl,
-      req.body,
-      {
-        headers: {
-          Accept: req.headers.accept,
-          'Content-Type': req.headers['content-type'],
-          'X-Forwarded-For': req.headers['x-forwarded-for'],
-        },
-      }
-    );
-    console.log('Response data:', response.data);
-    res.status(response.status).send(response.data);
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(error.response?.status || 500).send(error.response?.data || 'Internal Server Error');
-  }
+    try {
+      const response = await axios.post(
+        fullUrl,
+        data, // Use the raw data as the body
+        {
+          headers: {
+            'Content-Type': 'text/plain;charset=UTF-8',
+            // Include other necessary headers
+          },
+        }
+      );
+      logger.info('Response data:', { data: response.data });
+      res.status(response.status).send(response.data);
+    } catch (error) {
+      logger.error('Error occurred', { error: error.message, stack: error.stack });
+      res.status(error.response?.status || 500).send(error.response?.data || 'Internal Server Error');
+    }
+  });
 });
+
 
 module.exports = app;

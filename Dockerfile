@@ -1,5 +1,6 @@
-FROM public.ecr.aws/bitnami/node:14.17.3-prod AS starter
+FROM --platform=linux/amd64 node:alpine3.18 AS starter
 
+CMD mkdir -p /home/node/dd-proxy-api
 WORKDIR /home/node/dd-proxy-api
 
 COPY . .
